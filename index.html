@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111326"><title>AARU — Personal Assistant</title>
+<style>
+:root{color-scheme:dark;--bg:#0c0e1b;--panel:#171a2d;--muted:#a7abc4;--accent:#a78bfa;--line:#2a2e49}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 0,#242044 0,#0c0e1b 48%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f6f4ff;min-height:100vh}
+main{max-width:720px;margin:auto;min-height:100vh;display:flex;flex-direction:column;padding:18px 14px}
+header{text-align:center;padding:12px 0 14px}.logo{font-size:34px;font-weight:800;letter-spacing:8px;color:#c4b5fd}.sub{font-size:11px;letter-spacing:2px;color:var(--muted);margin-top:4px}
+.orb{width:86px;height:86px;border-radius:50%;margin:16px auto 12px;background:radial-gradient(circle at 35% 30%,#f5eaff,#a78bfa 24%,#6d55bd 53%,#26204f 75%);box-shadow:0 0 35px #9b7cff77,inset 0 0 20px #fff8}
+h1{font-size:21px;margin:8px 0}.hint{color:var(--muted);font-size:13px}.chat{flex:1;display:flex;flex-direction:column;gap:10px;padding:8px 0 14px}
+.msg{max-width:88%;padding:11px 13px;border-radius:16px;line-height:1.45;font-size:14px;overflow-wrap:anywhere}.ai{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}.user{align-self:flex-end;background:#5b469b;border-bottom-right-radius:5px}.label{font-size:10px;color:#c4b5fd;margin-bottom:4px;letter-spacing:1px}
+.composer{position:sticky;bottom:0;background:#111326;border:1px solid var(--line);border-radius:18px;padding:8px;display:flex;gap:7px;box-shadow:0 -10px 30px #0c0e1b}
+input{min-width:0;flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px;padding:9px}button{border:0;border-radius:13px;background:#8b70dc;color:white;padding:10px 13px;font-weight:650;font-size:14px}button:active{transform:scale(.97)}.secondary{background:#292641;color:#ddd6fe}
+.actions{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:10px 0 13px}.status{text-align:center;color:#a7abc4;font-size:11px;min-height:16px;margin:4px 0 8px}
+footer{text-align:center;color:#858aa8;font-size:10px;padding:12px 0 3px}
+</style></head><body><main>
+<header><div class="logo">AARU</div><div class="sub">YOUR PERSONAL AI ASSISTANT</div><div class="orb"></div><h1>Hello! I'm Aaru.</h1><div class="hint">Your assistant prototype · Voice + local notes</div></header>
+<section class="chat" id="chat" aria-live="polite"><div class="msg ai"><div class="label">AARU</div>Hi! I'm Aaru's early prototype. You can type or try the microphone. I don't have a real AI brain connected yet.</div></section>
+<div class="status" id="status">Ready</div>
+<div class="actions"><button class="secondary" onclick="quick('What can you do?')">What can you do?</button><button class="secondary" onclick="quick('Help me plan my study day')">Plan my day</button><button class="secondary" onclick="speakLast()">🔊 Speak reply</button><button class="secondary" onclick="showNotes()">My notes</button></div>
+<form class="composer" id="form"><button type="button" class="secondary" id="mic" aria-label="Voice input">🎙️</button><input id="entry" autocomplete="off" placeholder="Message Aaru..." aria-label="Message Aaru"><button type="submit">Send</button></form>
+<footer>Prototype only · Notes stay in this browser on this device. Don't save sensitive information.</footer>
+</main>
+<script>
+const chat=document.getElementById('chat'),statusEl=document.getElementById('status');let lastReply="I'm an early prototype. My real AI connection has not been added yet.";
+function add(text,who){const el=document.createElement('div');el.className='msg '+who;if(who==='ai'){const lab=document.createElement('div');lab.className='label';lab.textContent='AARU';el.appendChild(lab)}el.appendChild(document.createTextNode(text));chat.appendChild(el);el.scrollIntoView({behavior:'smooth',block:'end'});}
+function reply(text){const q=text.toLowerCase();if(q.includes('what can you do'))lastReply="I can demonstrate simple commands, speak replies, and keep notes in this browser. I am not connected to a real AI yet.";else if(q.includes('plan'))lastReply="Let's plan your day: choose your top three tasks, set a time for each, and include short breaks.";else if(q.startsWith('remember ')){const note=text.slice(9).trim();let notes=JSON.parse(localStorage.getItem('aaru_notes')||'[]');notes.push(note);localStorage.setItem('aaru_notes',JSON.stringify(notes));lastReply="I'll keep that note in this browser on this device. You can say or type 'my notes' to view it."; }else if(q.includes('my notes')){const notes=JSON.parse(localStorage.getItem('aaru_notes')||'[]');lastReply=notes.length?'Your saved notes: '+notes.map((n,i)=>(i+1)+'. '+n).join(' | '):"You don't have any saved notes yet. Try: Remember buy a notebook."; }else if(q.includes('hello')||q.includes('hi'))lastReply="Hello! I'm Aaru. What would you like help with?";else lastReply="I received your message. I'm still a prototype, so I can't answer general questions intelligently yet. We'll add more features step by step.";add(lastReply,'ai');}
+function send(t){t=t.trim();if(!t)return;add(t,'user');document.getElementById('entry').value='';setTimeout(()=>reply(t),250)}
+function quick(t){send(t)}document.getElementById('form').addEventListener('submit',e=>{e.preventDefault();send(document.getElementById('entry').value)});
+function speakLast(){if(!('speechSynthesis'in window)){statusEl.textContent='Speech playback is not supported in this browser.';return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(lastReply);u.lang='en-IN';u.pitch=1.12;speechSynthesis.speak(u);statusEl.textContent='Speaking reply…'}
+function showNotes(){send('my notes')}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+document.getElementById('mic').addEventListener('click',()=>{if(!SR){statusEl.textContent='Voice input is not supported here. Please type your message.';return}const r=new SR();r.lang='en-IN';r.interimResults=false;r.maxAlternatives=1;statusEl.textContent='Listening…';r.onresult=e=>{const t=e.results[0][0].transcript;document.getElementById('entry').value=t;statusEl.textContent='Heard: '+t};r.onerror=e=>{statusEl.textContent='Mic issue: '+e.error+'. You can type instead.'};r.onend=()=>{if(statusEl.textContent==='Listening…')statusEl.textContent='Ready'};r.start()});
+</script></body></html>
